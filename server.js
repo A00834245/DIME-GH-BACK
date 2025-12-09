@@ -119,6 +119,36 @@ function wrapError(res, message, statusCode = 400, details = null) {
 }
 
 // ========================================
+// ROOT ENDPOINT
+// ========================================
+
+app.get('/', (req, res) => {
+  res.json({
+    service: 'DIME API Backend',
+    status: 'OK',
+    version: '2.0.0',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/health',
+      dataset: '/api/dataset',
+      visits: {
+        create: 'POST /api/v2/visits',
+        list: 'GET /api/v2/visits',
+        get: 'GET /api/v2/visits/:visitId',
+        getByStore: 'GET /api/v2/visits/store/:storeId'
+      },
+      comments: {
+        create: 'POST /api/v2/comments',
+        list: 'GET /api/v2/comments'
+      },
+      reminders: {
+        pending: 'GET /api/v2/reminders/pending'
+      }
+    }
+  });
+});
+
+// ========================================
 // HEALTH CHECK ENDPOINT
 // ========================================
 
