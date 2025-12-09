@@ -10,4 +10,5 @@ require('dotenv').config();
 const app = require('../server.js');
 
 // Export the app as the serverless function handler
+// Vercel will automatically handle Express apps when exported this way
 module.exports = app;
