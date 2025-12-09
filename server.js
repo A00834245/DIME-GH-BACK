@@ -8,8 +8,24 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // CORS configuration to allow requests from Angular frontend
+const allowedOrigins = [
+  'http://localhost:4200',
+  'http://127.0.0.1:4200',
+  'https://dime-gh-vercel-front.vercel.app',
+  process.env.FRONTEND_URL // Allow custom frontend URL from environment
+].filter(Boolean); // Remove any undefined values
+
 const corsOptions = {
-  origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -707,27 +723,33 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ========================================
 
-app.listen(PORT, () => {
-  console.log(`🚀 DIME API Backend running on http://localhost:${PORT}`);
-  console.log('');
-  console.log('📍 Available endpoints:');
-  console.log(`   GET  /health                     - Health check`);
-  console.log(`   GET  /api/dataset                - Google Maps dataset proxy`);
-  console.log('');
-  console.log('   📌 Visits API (v2):');
-  console.log(`   POST /api/v2/visits              - Create/reuse visit`);
+// Only start server if not in Vercel (serverless) environment
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`🚀 DIME API Backend running on http://localhost:${PORT}`);
+    console.log('');
+    console.log('📍 Available endpoints:');
+    console.log(`   GET  /health                     - Health check`);
+    console.log(`   GET  /api/dataset                - Google Maps dataset proxy`);
+    console.log('');
+    console.log('   📌 Visits API (v2):');
+    console.log(`   POST /api/v2/visits              - Create/reuse visit`);
   console.log(`   GET  /api/v2/visits              - Get user visits by date`);
   console.log(`   GET  /api/v2/visits/:visitId     - Get specific visit`);
   console.log(`   GET  /api/v2/visits/store/:id    - Get today's visit for store`);
   console.log('');
-  console.log('   💬 Comments API (v2):');
-  console.log(`   POST /api/v2/comments            - Create comment`);
-  console.log(`   GET  /api/v2/comments            - Get store comments`);
-  console.log('');
+    console.log('   💬 Comments API (v2):');
+    console.log(`   POST /api/v2/comments            - Create comment`);
+    console.log(`   GET  /api/v2/comments            - Get store comments`);
+    console.log('');
+  });
+}
   console.log('   🔔 Reminders API (v2):');
-  console.log(`   GET  /api/v2/reminders/pending   - Get pending visits for banner`);
-  console.log('');
-  console.log('Ready to serve requests from Angular frontend (http://localhost:4200)');
-});
+    console.log(`   GET  /api/v2/reminders/pending   - Get pending visits for banner`);
+    console.log('');
+    console.log('Ready to serve requests from Angular frontend (http://localhost:4200)');
+  });
+}
 
+// Export app for Vercel serverless
 module.exports = app;
