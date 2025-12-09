@@ -575,9 +575,9 @@ app.get('/api/dataset', async (req, res) => {
     // Validate required environment variables
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
     const datasetId = process.env.GOOGLE_DATASET_ID;
-    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const credentialsValue = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-    if (!projectId || !datasetId || !credentialsPath) {
+    if (!projectId || !datasetId || !credentialsValue) {
       console.error('Missing required environment variables');
       return res.status(500).json({
         error: 'Server configuration error',
@@ -586,10 +586,30 @@ app.get('/api/dataset', async (req, res) => {
     }
 
     // Initialize Google Auth with service account
-    const auth = new GoogleAuth({
-      keyFile: credentialsPath,
-      scopes: ['https://www.googleapis.com/auth/cloud-platform']
-    });
+    // Support both JSON string (Vercel) and file path (local dev)
+    let auth;
+    try {
+      // Try to parse as JSON (for Vercel environment variable)
+      try {
+        const credentials = JSON.parse(credentialsValue);
+        auth = new GoogleAuth({
+          credentials: credentials,
+          scopes: ['https://www.googleapis.com/auth/cloud-platform']
+        });
+      } catch (parseError) {
+        // If parsing fails, assume it's a file path (for local development)
+        auth = new GoogleAuth({
+          keyFile: credentialsValue,
+          scopes: ['https://www.googleapis.com/auth/cloud-platform']
+        });
+      }
+    } catch (error) {
+      console.error('Error initializing Google Auth:', error);
+      return res.status(500).json({
+        error: 'Authentication configuration error',
+        message: 'Failed to initialize Google Auth. Check GOOGLE_APPLICATION_CREDENTIALS format.'
+      });
+    }
 
     // Get access token
     const authClient = await auth.getClient();
@@ -734,17 +754,15 @@ if (process.env.VERCEL !== '1') {
     console.log('');
     console.log('   📌 Visits API (v2):');
     console.log(`   POST /api/v2/visits              - Create/reuse visit`);
-  console.log(`   GET  /api/v2/visits              - Get user visits by date`);
-  console.log(`   GET  /api/v2/visits/:visitId     - Get specific visit`);
-  console.log(`   GET  /api/v2/visits/store/:id    - Get today's visit for store`);
-  console.log('');
+    console.log(`   GET  /api/v2/visits              - Get user visits by date`);
+    console.log(`   GET  /api/v2/visits/:visitId     - Get specific visit`);
+    console.log(`   GET  /api/v2/visits/store/:id    - Get today's visit for store`);
+    console.log('');
     console.log('   💬 Comments API (v2):');
     console.log(`   POST /api/v2/comments            - Create comment`);
     console.log(`   GET  /api/v2/comments            - Get store comments`);
     console.log('');
-  });
-}
-  console.log('   🔔 Reminders API (v2):');
+    console.log('   🔔 Reminders API (v2):');
     console.log(`   GET  /api/v2/reminders/pending   - Get pending visits for banner`);
     console.log('');
     console.log('Ready to serve requests from Angular frontend (http://localhost:4200)');
