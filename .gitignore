@@ -12,9 +12,9 @@ yarn-error.log*
 .env.production.local
 
 # Google Service Account Keys
-*.json
-keys/
-credentials/
+# Note: package.json and package-lock.json should NOT be ignored
+keys/*.json
+credentials/*.json
 service-account*.json
 
 # Logs
