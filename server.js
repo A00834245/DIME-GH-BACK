@@ -20,11 +20,24 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
     }
+    
+    // Allow all Vercel preview deployments (for testing)
+    if (origin.includes('.vercel.app')) {
+      console.log(`[CORS] Allowing Vercel deployment: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Allow in development mode
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    console.warn(`[CORS] Blocked origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
